@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 import pyperclip
+import json
 
 # --------------------------------------- FUNCTIONS ---------------------------------------------
 
@@ -8,14 +9,35 @@ def add_function():
     web_text = website_entry.get()
     email_text = email_entry.get()
     password_text = password_entry.get()
-    if len(web_text) < 1 or len(email_text) < 5 or len(password_text) < 5:
+
+    new_data = {
+        web_text: {
+                "email": email_text,
+                "password": password_text,
+        }
+
+    }
+    
+    if len(web_text) == 0 or len(email_text) == 0 or len(password_text) == 0:
         messagebox.showerror(title="Ooops", message="You should fill out the fields!")
     else:
-        is_ok = messagebox.askokcancel(title=website_entry, message=f"These are the details entered: \nEmail: {email_text}"
-                           f"\nPassword: {password_text} \nIs it ok to save?")
-    if is_ok:
-        with open("data.txt", "a") as data_file:
-            data_file.write(f"{web_text} | {email_text} | {password_text} \n")
+        try:
+            with open("data.json", "r") as data_file:
+                # reading old data
+                data = json.load(data_file)
+            
+        except FileNotFoundError:
+            with open("data.json", "w") as data_file:
+                json.dump(new_data, data_file, indent=4)
+        else:
+            # updating new data
+            data.update(new_data)
+            
+            with open("data.json", "w") as data_file:
+                    # saving data
+                    json.dump(data, data_file, indent=4)
+                
+        finally:      
             website_entry.delete(0, END)
             password_entry.delete(0, END)
     
@@ -75,7 +97,25 @@ generate = Button(text="Generate Password", bg="lightblue", command=generate_pas
 generate.grid(row=3, column=2)
 
 add = Button(text="Add", bg="white", width=45, command=add_function)
-add.grid(column=1, row=4, columnspan=3)
+add.grid(column=1, row=4, columnspan=2)
+
+def search():
+    try:
+        with open("data.json", "r") as file:
+            f = json.load(file)
+    except FileNotFoundError:
+        messagebox.showerror(title="NOT FOUND", message="Can't find that password!")
+    else:
+        if website_entry.get() == "":
+           messagebox.showerror(title="Keep calm", message="Qual é o site cão de caça?")
+        else:
+            dados = f[website_entry.get()]
+            passe = dados['password']
+            email = dados["email"]
+            messagebox.showinfo(title=dados, message=f"E-mail: {email}\nPassword: {passe}")
+
+search = Button(text="Search", bg="red", width=13, command=search)
+search.grid(column=2, row=1)
 
 
 
